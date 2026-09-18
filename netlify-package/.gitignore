@@ -1,0 +1,12 @@
+node_modules/
+/build/
+/.svelte-kit/
+/.netlify/
+/package-lock.json.*
+.env
+.env.*
+!.env.example
+.DS_Store
+
+# Generated at build time by `npm run data` (regenerated on Netlify).
+/static/data/

@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%sveltekit.assets%/favicon.svg" />
+    <!-- viewport-fit=cover is what makes env(safe-area-inset-*) resolve to the
+         real notch / home-indicator insets rather than 0. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ECECEC" />
+    <meta name="description" content="An interactive map of Iowa's concentrated animal feeding operations (CAFOs): where they are, how many animals they hold, and how much manure they produce." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fraunces (display serif) + Onest (UI sans) — Sentient Media brand fonts. -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Onest:wght@400;500;600;700&display=swap"
+    />
+    %sveltekit.head%
+  </head>
+  <body class="bg-paper text-ink font-sans antialiased">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
+</html>

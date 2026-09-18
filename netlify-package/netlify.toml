@@ -1,0 +1,19 @@
+[build]
+  command = "npm run data && npm run build"
+  publish = "build"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Allow embedding in articles/webpages via <iframe>.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "frame-ancestors *"
+    X-Content-Type-Options = "nosniff"
+
+# Long-cache the immutable hashed assets.
+[[headers]]
+  for = "/_app/immutable/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

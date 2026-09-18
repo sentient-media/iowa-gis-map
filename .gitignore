@@ -1,0 +1,16 @@
+node_modules/
+.svelte-kit/
+build/
+.netlify/
+.DS_Store
+.env
+.env.*
+!.env.example
+# Local reference files; only the canonical source CSV ships.
+/Pages_and_screens_Page_title_and_screen_class.csv
+/netlify-package/iowa_cafo_export_old_as_of14Sept.csv
+/netlify-package/Final - Iowa - Map - 9.12.2026 - supplied by John on 14 Sept - Sheet1.csv
+
+# Keep documentation local until publication is requested.
+/README.md
+/netlify-package/README.md

@@ -1,0 +1,419 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Height of the phone action bar, excluding the home-indicator inset that
+       is padded onto it. Sheets and the zoom controls dock above the two. */
+    --bar-h: 56px;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-l: env(safe-area-inset-left, 0px);
+  }
+  html {
+    font-size: 18px;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+    text-rendering: optimizeLegibility;
+  }
+  html,
+  body {
+    height: 100%;
+  }
+  body {
+    background: theme('colors.paper');
+    color: theme('colors.ink');
+    line-height: 1.55;
+    overflow: hidden;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1, 'kern' 1;
+  }
+}
+
+@layer base {
+  /* Interactive-control feedback. Hover doesn't fire on touch, so lean on
+     focus-visible (keyboard/AT) and a subtle active press (touch/mouse), and
+     drop the default grey mobile tap flash in favour of our own states. */
+  button,
+  [role='option'],
+  a,
+  input,
+  select {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:focus-visible,
+  [role='option']:focus-visible,
+  a:focus-visible {
+    outline: 2px solid theme('colors.editorial');
+    outline-offset: 2px;
+  }
+  button:active {
+    opacity: 0.7;
+  }
+}
+
+/* ---------- editorial type primitives (ported from Sentient) ---------- */
+.headline {
+  font-family: theme('fontFamily.serif');
+  font-weight: 600;
+  font-size: clamp(30px, 4.5vw, 54px);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  color: theme('colors.ink');
+  font-variation-settings: 'opsz' 144, 'SOFT' 50;
+}
+
+.section-heading {
+  font-family: theme('fontFamily.serif');
+  font-weight: 600;
+  font-size: clamp(22px, 3vw, 34px);
+  line-height: 1.1;
+  letter-spacing: -0.018em;
+  color: theme('colors.ink');
+  font-variation-settings: 'opsz' 96;
+}
+
+.eyebrow {
+  font-family: theme('fontFamily.sans');
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: theme('colors.ink-3');
+}
+
+.dek {
+  font-family: theme('fontFamily.serif');
+  font-size: clamp(16px, 1.4vw, 20px);
+  line-height: 1.5;
+  color: theme('colors.ink-2');
+  font-weight: 400;
+  font-variation-settings: 'opsz' 20;
+}
+
+.body-prose {
+  font-family: theme('fontFamily.serif');
+  font-size: 17px;
+  line-height: 1.6;
+  color: theme('colors.ink-2');
+  font-variation-settings: 'opsz' 18;
+}
+
+.huge-number {
+  font-family: theme('fontFamily.serif');
+  font-weight: 600;
+  font-size: clamp(34px, 5vw, 52px);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: theme('colors.ink');
+  font-variation-settings: 'opsz' 144;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Sentient wordmark lockup ---------- */
+.wordmark-brand {
+  font-family: theme('fontFamily.serif');
+  font-weight: 700;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: theme('colors.ink');
+  font-variation-settings: 'opsz' 60;
+}
+.wordmark-sub {
+  font-family: theme('fontFamily.sans');
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: theme('colors.ink-3');
+}
+.wordmark-sub .dot {
+  color: theme('colors.editorial');
+  font-weight: 700;
+  padding: 0 0.25em;
+}
+
+/* ---------- MapLibre popup styling (branded) ---------- */
+.maplibregl-popup-content {
+  font-family: theme('fontFamily.sans');
+  padding: 0;
+  border-radius: 6px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+  overflow-y: auto;
+  max-height: 80vh; /* safety cap; the compact card normally fits without scrolling */
+  max-height: 80dvh;
+}
+.maplibregl-popup-close-button {
+  /* Square, finger-sized target — the card's header reserves room for it. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 20px;
+  top: 2px;
+  right: 2px;
+  line-height: 1;
+  color: #bbb;
+}
+.maplibregl-popup-close-button:hover {
+  background: transparent;
+  color: #fff;
+}
+
+/* Phone layout: lift MapLibre's own controls (the attribution) clear of the
+   action bar docked at the bottom of the screen. */
+@media (max-width: 720px), (max-height: 520px) {
+  .maplibregl-ctrl-bottom-left,
+  .maplibregl-ctrl-bottom-right {
+    bottom: calc(var(--bar-h) + var(--safe-b));
+  }
+}
+
+/* ---------- facility card (shared by the popup and the mobile sheet) ----------
+   Built as an HTML string in $lib/data/facility-card.ts, so it can't use Svelte
+   scoped styles — layout and type live here, per-facility colours stay inline. */
+.fac-popup {
+  font-family: theme('fontFamily.sans');
+  /* Never wider than the screen it's anchored on. */
+  width: min(284px, calc(100vw - 32px));
+  font-size: 12px;
+  color: #2a2a2a;
+}
+/* In the bottom sheet the card fills the sheet and gets roomier type. */
+.fac-popup.in-sheet {
+  width: 100%;
+  font-size: 13px;
+}
+
+.fac-popup .fp-hd {
+  background: #000;
+  color: #fff;
+  padding: 12px 13px;
+}
+.fac-popup .fp-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Clear the close button that overlays this corner. */
+  padding-right: 34px;
+}
+.fac-popup .fp-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+.fac-popup .fp-name {
+  font-family: theme('fontFamily.serif');
+  font-weight: 600;
+  font-size: 15.5px;
+  line-height: 1.2;
+  flex: 1;
+}
+.fac-popup .fp-type {
+  font-size: 11px;
+  color: #bbb;
+  margin-top: 5px;
+}
+.fac-popup .fp-loc {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #9a9a9a;
+}
+.fac-popup .fp-status {
+  flex: none;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 11px;
+}
+
+.fac-popup .fp-prod {
+  padding: 12px 13px;
+}
+.fac-popup .fp-stats {
+  display: flex;
+  gap: 8px;
+}
+.fac-popup .fp-stat {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+.fac-popup .fp-stat-val {
+  font-family: theme('fontFamily.serif');
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1;
+  color: #000;
+}
+.fac-popup .fp-stat-lbl {
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #666;
+  margin-top: 4px;
+}
+.fac-popup .fp-breakdown {
+  color: #666;
+  font-size: 11px;
+  margin-top: 9px;
+  text-align: center;
+  line-height: 1.5;
+}
+.fac-popup .fp-au {
+  color: #9a9a9a;
+}
+
+.fac-popup .fp-comp {
+  padding: 11px 13px;
+  border-top: 1px solid #ececec;
+}
+.fac-popup .fp-banner {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.fac-popup .fp-banner-icon {
+  font-size: 13px;
+}
+.fac-popup .fp-lastnov {
+  font-size: 10.5px;
+  color: #9a9a9a;
+  margin-top: 4px;
+  padding-left: 2px;
+}
+.fac-popup .fp-permits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 12px;
+  margin-top: 9px;
+  font-size: 11px;
+}
+.fac-popup .fp-permits-lbl {
+  color: #9a9a9a;
+  font-weight: 600;
+}
+.fac-popup .fp-permit {
+  white-space: nowrap;
+  font-weight: 700;
+}
+.fac-popup .fp-permit-lbl {
+  color: #666;
+  font-weight: 400;
+}
+
+.fac-popup .fp-ft {
+  padding: 10px 13px 11px;
+  border-top: 1px solid #ececec;
+}
+.fac-popup .fp-links {
+  font-size: 12px;
+}
+.fac-popup .fp-links a {
+  color: theme('colors.editorial');
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.fac-popup .fp-sep {
+  color: #c8c8c8;
+  margin: 0 8px;
+}
+.fac-popup .fp-disclaimer {
+  color: #9a9a9a;
+  font-size: 9px;
+  line-height: 1.4;
+  margin-top: 7px;
+}
+
+/* Sheet-only disclosure holding the permits grid and the estimation note. */
+.fac-popup .fp-more {
+  margin-top: 9px;
+}
+.fac-popup .fp-more > summary {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  color: #666;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.fac-popup .fp-more > summary::-webkit-details-marker {
+  display: none;
+}
+/* Chevron that flips when the disclosure opens. */
+.fac-popup .fp-more > summary::after {
+  content: '⌄';
+  font-size: 13px;
+  line-height: 1;
+  transform: translateY(-2px);
+  transition: transform 150ms;
+}
+.fac-popup .fp-more[open] > summary::after {
+  transform: rotate(180deg) translateY(1px);
+}
+.fac-popup .fp-more .fp-permits {
+  margin-top: 2px;
+}
+
+/* Sheet variant: bigger type and padded link targets, since this is the
+   touch surface. Keyed off the variant class rather than a media query so the
+   card is sized by the surface it's on, not the viewport. */
+.fac-popup.in-sheet .fp-stat-lbl,
+.fac-popup.in-sheet .fp-disclaimer {
+  font-size: 10.5px;
+}
+.fac-popup.in-sheet .fp-type,
+.fac-popup.in-sheet .fp-loc,
+.fac-popup.in-sheet .fp-breakdown,
+.fac-popup.in-sheet .fp-permits {
+  font-size: 12px;
+}
+.fac-popup.in-sheet .fp-lastnov {
+  font-size: 11.5px;
+}
+.fac-popup.in-sheet .fp-banner {
+  font-size: 13px;
+}
+.fac-popup.in-sheet .fp-name {
+  font-size: 17px;
+}
+.fac-popup.in-sheet .fp-stat-val {
+  font-size: 22px;
+}
+.fac-popup.in-sheet .fp-links {
+  font-size: 13.5px;
+}
+.fac-popup.in-sheet .fp-links a {
+  display: inline-block;
+  padding: 7px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
