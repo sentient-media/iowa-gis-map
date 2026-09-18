@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy, untrack } from 'svelte';
+  import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
   import type { Map as MlMap, Popup as MlPopup, Marker as MlMarker, GeoJSONSource } from 'maplibre-gl';
   import { app, mapBus, ui, clearSearch, searchActive, detentPx, BAR_H, TOP_RESERVED } from '$lib/state.svelte';
   import { colorExpr, radiusForMode } from '$lib/data/symbology';
@@ -212,6 +213,9 @@
 
   onMount(async () => {
     MaplibreGl = await import('maplibre-gl');
+    // MapLibre 6 ships a separate worker. Have Vite bundle it and its imports
+    // rather than letting MapLibre look beside the hashed application chunk.
+    MaplibreGl.setWorkerUrl(mapWorkerUrl);
     await import('maplibre-gl/dist/maplibre-gl.css');
 
     const m = new MaplibreGl.Map({
