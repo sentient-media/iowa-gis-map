@@ -110,7 +110,7 @@
       </p>
     {:else}
     <ul class="list">
-      {#each visible as f (f.stfacid || `${f.lon},${f.lat}`)}
+      {#each visible as f (f.recordId)}
         <li>
           <button
             class="fac"

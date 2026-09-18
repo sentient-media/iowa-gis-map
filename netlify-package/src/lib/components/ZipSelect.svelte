@@ -276,7 +276,7 @@
   {#if open}
     {#if filtered.length}
       <ul class="list" id="zip-list" role="listbox" aria-label="Search results">
-        {#each filtered as o, i (o.kind === 'zip' ? `z:${o.zip}` : o.kind === 'county' ? `c:${o.county}` : o.kind === 'address' ? `a:${o.hit.label}` : `f:${o.facility.stfacid || `${o.facility.lon},${o.facility.lat}`}`)}
+        {#each filtered as o, i (o.kind === 'zip' ? `z:${o.zip}` : o.kind === 'county' ? `c:${o.county}` : o.kind === 'address' ? `a:${o.hit.label}` : `f:${o.facility.recordId}`)}
           <li role="option" aria-selected={i === active}>
             <button
               class="opt"

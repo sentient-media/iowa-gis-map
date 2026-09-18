@@ -6,10 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
+    "build": "vite build && node scripts/check-build.mjs",
     "preview": "vite preview",
     "data": "node scripts/process-data.mjs",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test": "npm run data && node --test tests/data.test.mjs"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.6",

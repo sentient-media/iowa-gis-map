@@ -142,17 +142,8 @@
   // mistaken for the user clicking the ✕ (which zooms back out).
   let closingPopup = false;
 
-  // Stable identity for a facility, so we can tell whether a click landed on the
-  // one we're already flown in to.
-  //
-  // It has to key off the DNR id rather than coordinates: MapLibre quantises
-  // geometry when it tiles a GeoJSON source, so the lon/lat that comes back
-  // from queryRenderedFeatures is close to, but not equal to, the value in the
-  // source data. Comparing coordinates therefore worked only when both sides
-  // came from the map, and silently failed for a facility opened from the
-  // results list. Every facility in this dataset carries an id.
-  const facilityKey = (f: Facility) =>
-    f.stfacid ? `id:${f.stfacid}` : `xy:${f.lon.toFixed(4)},${f.lat.toFixed(4)}`;
+  // Use the source-row ID: DNR IDs can repeat, and MapLibre quantizes coordinates.
+  const facilityKey = (f: Facility) => f.recordId;
 
   // Desktop-only hover preview: a small chip that follows the cursor and shows
   // just the facility name. Identification-at-a-glance without the full popup.

@@ -123,6 +123,8 @@ for await (const row of parser) {
   // popup but is not a filter: every Active 300+ AU operation makes the map.
   const opType = str(row.OperatType);
   records.push({
+    // DNR IDs can repeat for separate rows/species in the supplied export.
+    recordId: `row-${total}`,
     facName: str(row.facName),
     address: str(row.LocAddress),
     city: str(row.CityName),
@@ -170,6 +172,7 @@ const features = records.map((r) => ({
   type: 'Feature',
   geometry: { type: 'Point', coordinates: [r.lon, r.lat] },
   properties: {
+    recordId: r.recordId,
     name: r.facName,
     address: r.address,
     city: r.city,

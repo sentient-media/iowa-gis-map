@@ -2,6 +2,8 @@
 
 /** Properties carried on each GeoJSON facility feature (see process-data.mjs). */
 export interface FacilityProps {
+  /** Unique source-row identity; DNR facility IDs are not unique in the export. */
+  recordId: string;
   name: string;
   address: string;
   city: string;
