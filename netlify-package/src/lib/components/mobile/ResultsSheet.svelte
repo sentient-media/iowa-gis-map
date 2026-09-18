@@ -1,7 +1,7 @@
 <script lang="ts">
   import { app, ui, TAP_DETENTS, searchActive } from '$lib/state.svelte';
   import { passes } from '$lib/data/filters';
-  import { commas } from '$lib/data/format';
+  import { commas, compact } from '$lib/data/format';
   import DragSheet from './DragSheet.svelte';
   import SearchIntro from '../SearchIntro.svelte';
   import ResultsPanel from '../ResultsPanel.svelte';
@@ -50,8 +50,10 @@
             : `ZIP ${app.zip}`}
       </span>
     {:else}
-      <span class="title">Iowa CAFO map</span>
-      <span class="sub">Search an address to start</span>
+      <span class="brand">
+        <span class="wordmark-brand">Sentient Media</span>
+        <span class="wordmark-sub">Iowa<span class="dot">·</span>Map viewer</span>
+      </span>
     {/if}
   {/snippet}
 
@@ -61,12 +63,17 @@
     <SearchIntro />
     <div class="stats">
       <span><strong>{commas(data.totals.facilities)}</strong> facilities</span>
+      <span><strong>{compact(data.totals.animals)}</strong> animals</span>
+      <span><strong>{compact(data.totals.manure)}</strong> lbs manure/yr</span>
       <span><strong>{data.totals.counties}</strong> counties</span>
     </div>
   {/if}
 </DragSheet>
 
 <style>
+  .brand { display: flex; flex-direction: column; gap: 3px; }
+  .brand .wordmark-brand { font-size: 21px; }
+  .brand .wordmark-sub { font-size: 10px; }
   .title {
     font-family: theme('fontFamily.serif');
     font-weight: 600;
@@ -83,9 +90,9 @@
     white-space: nowrap;
   }
   .stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px 14px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 12px;
     padding-top: 12px;
     font-family: theme('fontFamily.sans');
     font-size: 13px;

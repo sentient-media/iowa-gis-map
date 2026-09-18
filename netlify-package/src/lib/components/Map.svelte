@@ -2,7 +2,7 @@
   import { onMount, onDestroy, untrack } from 'svelte';
   import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
   import type { Map as MlMap, Popup as MlPopup, Marker as MlMarker, GeoJSONSource } from 'maplibre-gl';
-  import { app, mapBus, ui, clearSearch, searchActive, detentPx, BAR_H, TOP_RESERVED } from '$lib/state.svelte';
+  import { app, mapBus, ui, clearSearch, searchActive, detentPx, BAR_H } from '$lib/state.svelte';
   import { colorExpr, radiusForMode } from '$lib/data/symbology';
   import { toExpression, passes } from '$lib/data/filters';
   import { circlePolygon, circleBounds } from '$lib/data/near';
@@ -47,15 +47,15 @@
     // usable pixels of height and send the camera somewhere absurd.
     if (vh <= 520 && vw >= 480) {
       return {
-        top: 92,
+        top: Math.min(ui.topReserved, vh - BAR_H - 92),
         bottom: BAR_H + 12,
         left: Math.round(Math.min(390, vw * 0.55)) + 20,
         right: 20
       };
     }
     return {
-      top: TOP_RESERVED,
-      bottom: detentPx(ui.detent, vh) + BAR_H + 12,
+      top: ui.topReserved,
+      bottom: Math.min(detentPx(ui.detent, vh) + BAR_H + 12, Math.max(BAR_H + 12, vh - ui.topReserved - 80)),
       left: 20,
       right: 20
     };
@@ -546,7 +546,7 @@
     const phone = el.clientWidth <= 720 || el.clientHeight <= 520;
     const sideDocked = el.clientHeight <= 520 && el.clientWidth >= 480;
     const offset: [number, number] = !phone
-      ? [0, 0]
+      ? [0, Math.round(el.clientHeight * 0.2)]
       : sideDocked
         ? [Math.round(el.clientWidth * 0.2), 0]
         : [0, -Math.round(el.clientHeight * 0.22)];

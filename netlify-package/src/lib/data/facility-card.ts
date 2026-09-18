@@ -18,15 +18,15 @@ const esc = (s: unknown) =>
   );
 
 /** Color-coded summary of a facility's enforcement record. */
-export function complianceSummary(p: FacilityProps): {
+export function complianceSummary(p: FacilityProps, expanded = false): {
   tone: 'clean' | 'issues' | 'unknown';
   text: string;
 } {
   const enf = [
-    { n: p.novs, one: 'NOV', many: 'NOVs' },
-    { n: p.lncs, one: 'LNC', many: 'LNCs' },
-    { n: p.orders, one: 'order', many: 'orders' },
-    { n: p.spills, one: 'spill', many: 'spills' }
+    { n: p.novs, one: expanded ? 'Notice of Violation' : 'NOV', many: expanded ? 'Notices of Violation' : 'NOVs' },
+    { n: p.lncs, one: expanded ? 'Letter of Noncompliance' : 'LNC', many: expanded ? 'Letters of Noncompliance' : 'LNCs' },
+    { n: p.orders, one: expanded ? 'Administrative Order' : 'order', many: expanded ? 'Administrative Orders' : 'orders' },
+    { n: p.spills, one: expanded ? 'Manure spill' : 'spill', many: expanded ? 'Manure spills' : 'spills' }
   ];
   const known = enf.filter((e) => e.n != null);
   if (known.length === 0) return { tone: 'unknown', text: 'Enforcement record unavailable' };
@@ -38,7 +38,7 @@ export function complianceSummary(p: FacilityProps): {
   }
   return {
     tone: 'issues',
-    text: issues.map((e) => `${e.n} ${e.n === 1 ? e.one : e.many}`).join(' · ')
+    text: issues.map((e) => `${e.n} ${e.n === 1 ? e.one : e.many}`).join(expanded ? '\n' : ' · ')
   };
 }
 
@@ -92,7 +92,7 @@ export function facilityCardHTML(p: FacilityProps, variant: 'popup' | 'sheet' = 
     </div>`;
 
   // --- 3. Compliance (the hook) ---
-  const c = complianceSummary(p);
+  const c = complianceSummary(p, !sheet);
   const tone = TONES[c.tone];
   const permit = (label: string, v: string) => {
     const mark = v === 'Y' ? '✓' : v === 'N' ? '✗' : '—';
@@ -112,7 +112,7 @@ export function facilityCardHTML(p: FacilityProps, variant: 'popup' | 'sheet' = 
     <div class="fp-comp">
       <div class="fp-banner" style="background:${tone.bg};color:${tone.fg}">
         <span class="fp-banner-icon">${tone.icon}</span>
-        <span>${esc(c.text)}</span>
+        <span class="fp-enforcement">${esc(c.text)}</span>
       </div>
       ${c.tone === 'issues' && p.lastNov ? `<div class="fp-lastnov">Last violation: ${esc(p.lastNov)}</div>` : ''}
       ${sheet ? '' : permits}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { ui } from '$lib/state.svelte';
 
   // A bottom sheet docked above the action bar. The map stays visible (and
   // interactive) above it — the sheet is a panel, not a modal.
@@ -10,7 +11,7 @@
   }: { title: string; onclose: () => void; children: Snippet } = $props();
 </script>
 
-<section class="sheet" aria-label={title}>
+<section class="sheet" aria-label={title} style="--top-reserved:{ui.topReserved}px">
   <header class="head">
     <span class="eyebrow">{title}</span>
     <button class="close" onclick={onclose} aria-label="Close {title}">✕</button>
@@ -29,7 +30,7 @@
     z-index: 4;
     display: flex;
     flex-direction: column;
-    max-height: 60dvh;
+    max-height: min(60dvh, calc(100dvh - var(--top-reserved) - var(--bar-h) - var(--safe-b)));
     background: theme('colors.paper-2');
     border-top: 1px solid theme('colors.rule');
     border-radius: 14px 14px 0 0;
