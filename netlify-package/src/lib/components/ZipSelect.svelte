@@ -60,9 +60,14 @@
     return n >= 50000 && n <= 69999;
   };
 
+  const zipLabel = (zip: string, place: string) => `${zip}${place ? ` · ${place}` : ''}`;
+
   // One option per ZIP that has facilities, labelled with its most common place.
+  // ZIPs without any (count 0) are kept out of browsing and name search — they
+  // only surface when typed in full, below.
   const zipOptions: ZipOpt[] = $derived.by(() => {
-    const opts = Object.keys(zipIndex).filter(inRegion).map((zip): ZipOpt => {
+    const zips = Object.keys(zipIndex).filter((zip) => inRegion(zip) && zipIndex[zip].count > 0);
+    const opts = zips.map((zip): ZipOpt => {
       const facs = byZip.get(zip) ?? [];
       const cityCounts: Record<string, number> = {};
       let county = '';
@@ -122,7 +127,7 @@
     if (app.county) return `${app.county} County`;
     if (!app.zip) return '';
     const o = zipOptions.find((x) => x.zip === app.zip);
-    return o ? `${o.zip}${o.place ? ` · ${o.place}` : ''}` : app.zip;
+    return zipLabel(app.zip, o?.place ?? zipIndex[app.zip]?.place ?? '');
   });
   const displayValue = $derived(open ? query : selectedLabel);
 
@@ -145,6 +150,23 @@
   // street genuinely can't be completed. When the query opens with a house
   // number, say that instead of a bare "no results".
   const typingAddress = $derived(/^\d/.test(query.trim()));
+
+  // A bare 5-digit ZIP typed in full. An Iowa ZIP with no facilities is still
+  // offered as a result: choosing it frames the ZIP on the map like any other,
+  // with nothing to highlight, and the panel says so. A ZIP the index doesn't
+  // know at all (a PO-box ZIP, or one outside Iowa — Iowa's run 50000–52899)
+  // gets a straight answer instead of the generic "no results".
+  const bareZip = $derived(/^\d{5}$/.test(query.trim()) ? query.trim() : '');
+  const isIowaZip = (zip: string) => {
+    const n = Number(zip);
+    return n >= 50000 && n <= 52899;
+  };
+  const emptyZipOption: ZipOpt | null = $derived.by(() => {
+    if (!bareZip) return null;
+    const entry = zipIndex[bareZip];
+    if (!entry || entry.count > 0) return null;
+    return { kind: 'zip', zip: bareZip, place: entry.place ?? '', count: 0, search: bareZip };
+  });
 
   // Debounced typeahead. The effect's cleanup cancels a pending request when
   // the query changes again, and `token` discards any reply that a later
@@ -193,7 +215,8 @@
     const cos = countyOptions.filter((o) => o.search.includes(q));
     const zips = zipOptions.filter((o) => o.search.includes(q));
     const facs = facilityOptions.filter((o) => o.search.includes(q));
-    const local: Opt[] = [...cos, ...zips, ...facs].slice(0, 100);
+    const empty: Opt[] = emptyZipOption ? [emptyZipOption] : [];
+    const local: Opt[] = [...cos, ...zips, ...empty, ...facs].slice(0, 100);
     const addrs: Opt[] = addrHits.map((hit) => ({ kind: 'address', hit }));
     return isStreetAddress(raw) ? [...addrs, ...local] : [...local, ...addrs];
   });
@@ -276,7 +299,7 @@
   {#if open}
     {#if filtered.length}
       <ul class="list" id="zip-list" role="listbox" aria-label="Search results">
-        {#each filtered as o, i (o.kind === 'zip' ? `z:${o.zip}` : o.kind === 'county' ? `c:${o.county}` : o.kind === 'address' ? `a:${o.hit.label}` : `f:${o.facility.recordId}`)}
+        {#each filtered as o, i (o.kind === 'zip' ? `z:${o.zip}` : o.kind === 'county' ? `c:${o.county}` : o.kind === 'address' ? `a:${o.hit.label}` : `f:${o.facility.uid}`)}
           <li role="option" aria-selected={i === active}>
             <button
               class="opt"
@@ -315,6 +338,10 @@
       <div class="noopt status" aria-live="polite"><span class="spinner"></span> Finding addresses…</div>
     {:else if geoError}
       <div class="noopt error">{geoError}</div>
+    {:else if bareZip && isIowaZip(bareZip)}
+      <div class="noopt">No active factory farms in ZIP {bareZip} with 300 or more animal units.</div>
+    {:else if bareZip}
+      <div class="noopt">ZIP {bareZip} isn't in Iowa — this map covers Iowa only.</div>
     {:else if typingAddress}
       <div class="noopt">Keep typing — suggestions appear once the street name is complete.</div>
     {:else}

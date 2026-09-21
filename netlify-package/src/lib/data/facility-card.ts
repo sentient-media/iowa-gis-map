@@ -8,7 +8,7 @@
  * permit marks) stay inline.
  */
 import { speciesLabel, speciesColor } from './species';
-import { commas, compact } from './format';
+import { compact, statNum } from './format';
 import type { FacilityProps } from './types';
 
 const esc = (s: unknown) =>
@@ -23,10 +23,10 @@ export function complianceSummary(p: FacilityProps, expanded = false): {
   text: string;
 } {
   const enf = [
-    { n: p.novs, one: expanded ? 'Notice of Violation' : 'NOV', many: expanded ? 'Notices of Violation' : 'NOVs' },
-    { n: p.lncs, one: expanded ? 'Letter of Noncompliance' : 'LNC', many: expanded ? 'Letters of Noncompliance' : 'LNCs' },
-    { n: p.orders, one: expanded ? 'Administrative Order' : 'order', many: expanded ? 'Administrative Orders' : 'orders' },
-    { n: p.spills, one: expanded ? 'Manure spill' : 'spill', many: expanded ? 'Manure spills' : 'spills' }
+    { n: p.novs, one: expanded ? 'Notice of Violation' : 'notice of violation', many: expanded ? 'Notices of Violation' : 'notices of violation' },
+    { n: p.lncs, one: expanded ? 'Letter of Noncompliance' : 'letter of noncompliance', many: expanded ? 'Letters of Noncompliance' : 'letters of noncompliance' },
+    { n: p.orders, one: expanded ? 'Administrative Order' : 'administrative order', many: expanded ? 'Administrative Orders' : 'administrative orders' },
+    { n: p.spills, one: expanded ? 'Manure spill' : 'manure spill', many: expanded ? 'Manure spills' : 'manure spills' }
   ];
   const known = enf.filter((e) => e.n != null);
   if (known.length === 0) return { tone: 'unknown', text: 'Enforcement record unavailable' };
@@ -84,8 +84,8 @@ export function facilityCardHTML(p: FacilityProps, variant: 'popup' | 'sheet' = 
   const production = `
     <div class="fp-prod">
       <div class="fp-stats">
-        ${stat(commas(p.animals), 'Est. head')}
-        ${stat(commas(p.units), 'Animal units')}
+        ${stat(statNum(p.animals), 'Est. head')}
+        ${stat(statNum(p.units), 'Animal units')}
         ${stat(compact(p.manure), 'lbs manure/yr')}
       </div>
       ${multiSpecies ? `<div class="fp-breakdown">${esc(p.breakdown)} <span class="fp-au">AU</span></div>` : ''}

@@ -104,13 +104,15 @@
           No facilities match the current filters within {app.radiusMi} miles. Try a wider radius.
         {:else if app.county}
           No facilities match the current filters in {app.county} County.
+        {:else if app.facilities.length === 0}
+          No active factory farms in ZIP {app.zip} with 300 or more animal units.
         {:else}
           No facilities match the current filters in this ZIP.
         {/if}
       </p>
     {:else}
     <ul class="list">
-      {#each visible as f (f.recordId)}
+      {#each visible as f (f.uid)}
         <li>
           <button
             class="fac"

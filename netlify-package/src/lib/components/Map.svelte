@@ -142,8 +142,16 @@
   // mistaken for the user clicking the ✕ (which zooms back out).
   let closingPopup = false;
 
-  // Use the source-row ID: DNR IDs can repeat, and MapLibre quantizes coordinates.
-  const facilityKey = (f: Facility) => f.recordId;
+  // Stable identity for a facility, so we can tell whether a click landed on the
+  // one we're already flown in to.
+  //
+  // It has to key off the DNR id rather than coordinates: MapLibre quantises
+  // geometry when it tiles a GeoJSON source, so the lon/lat that comes back
+  // from queryRenderedFeatures is close to, but not equal to, the value in the
+  // source data. Comparing coordinates therefore worked only when both sides
+  // came from the map, and silently failed for a facility opened from the
+  // results list. `uid` is that id, made unique where the export repeats one.
+  const facilityKey = (f: Facility) => f.uid;
 
   // Desktop-only hover preview: a small chip that follows the cursor and shows
   // just the facility name. Identification-at-a-glance without the full popup.
@@ -204,8 +212,7 @@
 
   onMount(async () => {
     MaplibreGl = await import('maplibre-gl');
-    // MapLibre 6 ships a separate worker. Have Vite bundle it and its imports
-    // rather than letting MapLibre look beside the hashed application chunk.
+    // Bundle MapLibre 6's separate worker into the static build.
     MaplibreGl.setWorkerUrl(mapWorkerUrl);
     await import('maplibre-gl/dist/maplibre-gl.css');
 
