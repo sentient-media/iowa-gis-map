@@ -18,15 +18,15 @@ const esc = (s: unknown) =>
   );
 
 /** Color-coded summary of a facility's enforcement record. */
-export function complianceSummary(p: FacilityProps): {
+export function complianceSummary(p: FacilityProps, expanded = false): {
   tone: 'clean' | 'issues' | 'unknown';
   text: string;
 } {
   const enf = [
-    { n: p.novs, one: 'notice of violation', many: 'notices of violation' },
-    { n: p.lncs, one: 'letter of noncompliance', many: 'letters of noncompliance' },
-    { n: p.orders, one: 'administrative order', many: 'administrative orders' },
-    { n: p.spills, one: 'manure spill', many: 'manure spills' }
+    { n: p.novs, one: expanded ? 'Notice of Violation' : 'notice of violation', many: expanded ? 'Notices of Violation' : 'notices of violation' },
+    { n: p.lncs, one: expanded ? 'Letter of Noncompliance' : 'letter of noncompliance', many: expanded ? 'Letters of Noncompliance' : 'letters of noncompliance' },
+    { n: p.orders, one: expanded ? 'Administrative Order' : 'administrative order', many: expanded ? 'Administrative Orders' : 'administrative orders' },
+    { n: p.spills, one: expanded ? 'Manure spill' : 'manure spill', many: expanded ? 'Manure spills' : 'manure spills' }
   ];
   const known = enf.filter((e) => e.n != null);
   if (known.length === 0) return { tone: 'unknown', text: 'Enforcement record unavailable' };
@@ -34,7 +34,7 @@ export function complianceSummary(p: FacilityProps): {
   if (issues.length === 0) return { tone: 'clean', text: 'No violations on record' };
   return {
     tone: 'issues',
-    text: issues.map((e) => `${e.n} ${e.n === 1 ? e.one : e.many}`).join(' · ')
+    text: issues.map((e) => `${e.n} ${e.n === 1 ? e.one : e.many}`).join(expanded ? '\n' : ' · ')
   };
 }
 
@@ -88,7 +88,7 @@ export function facilityCardHTML(p: FacilityProps, variant: 'popup' | 'sheet' = 
     </div>`;
 
   // --- 3. Compliance (the hook) ---
-  const c = complianceSummary(p);
+  const c = complianceSummary(p, !sheet);
   const tone = TONES[c.tone];
   const permit = (label: string, v: string) => {
     const mark = v === 'Y' ? '✓' : v === 'N' ? '✗' : '—';
@@ -108,7 +108,7 @@ export function facilityCardHTML(p: FacilityProps, variant: 'popup' | 'sheet' = 
     <div class="fp-comp">
       <div class="fp-banner" style="background:${tone.bg};color:${tone.fg}">
         <span class="fp-banner-icon">${tone.icon}</span>
-        <span>${esc(c.text)}</span>
+        <span class="fp-enforcement">${esc(c.text)}</span>
       </div>
       ${c.tone === 'issues' && p.lastNov ? `<div class="fp-lastnov">Last violation: ${esc(p.lastNov)}</div>` : ''}
       ${sheet ? '' : permits}
