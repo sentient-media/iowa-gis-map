@@ -137,7 +137,7 @@ export const TOP_RESERVED = 126;
  */
 export function detentPx(d: Detent, vh: number, peek = DETENTS.peek): number {
   if (d === 'hidden') return 0;
-  const max = Math.max(0, vh - BAR_H - ui.topReserved);
+  const max = Math.max(200, vh - BAR_H - TOP_RESERVED);
   if (d === 'full') return max;
   if (d === 'peek') return Math.min(max, peek);
   return Math.min(max, Math.round(vh * DETENTS.half));
@@ -150,16 +150,13 @@ export const ui = $state<{
   narrow: boolean;
   detent: Detent;
   cardDetent: Detent;
-  /** Measured bottom of the mobile search card plus its clearance. */
-  topReserved: number;
 }>({
   sheet: null,
   narrow: false,
   // Opens at half on arrival so the lede is the first thing read.
   detent: 'half',
   // The facility card keeps its own height, reset each time one is opened.
-  cardDetent: 'half',
-  topReserved: TOP_RESERVED
+  cardDetent: 'half'
 });
 
 /** Toggle an auxiliary sheet; opening one closes whichever was open. */

@@ -31,10 +31,10 @@ export const VIOLATION_TYPES: {
   key: keyof Pick<FacilityProps, 'novs' | 'lncs' | 'orders' | 'spills'>;
   label: string;
 }[] = [
-  { key: 'novs', label: 'NOVs' },
-  { key: 'lncs', label: 'LNCs' },
-  { key: 'orders', label: 'Orders' },
-  { key: 'spills', label: 'Spills' }
+  { key: 'novs', label: 'Notices of violation' },
+  { key: 'lncs', label: 'Letters of noncompliance' },
+  { key: 'orders', label: 'Administrative orders' },
+  { key: 'spills', label: 'Manure spills' }
 ];
 
 export const defaultFilter = (): FilterState => ({

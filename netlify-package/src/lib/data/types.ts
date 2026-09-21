@@ -2,8 +2,6 @@
 
 /** Properties carried on each GeoJSON facility feature (see process-data.mjs). */
 export interface FacilityProps {
-  /** Unique source-row identity; DNR facility IDs are not unique in the export. */
-  recordId: string;
   name: string;
   address: string;
   city: string;
@@ -39,6 +37,9 @@ export interface FacilityProps {
   compUrl: string;
   stfacid: string;
   locid: string;
+  /** Unique per feature: stfacid, suffixed where the export repeats one. Key
+   *  lists and selections on this, never on stfacid. */
+  uid: string;
 }
 
 /** A facility paired with its [lon, lat] coordinate, used by the results list. */
@@ -57,6 +58,8 @@ export interface ZipEntry {
   species: Record<string, number>;
   center: [number, number]; // [lon, lat]
   bounds: [number, number, number, number]; // [minLon, minLat, maxLon, maxLat]
+  /** Town name — only on ZIPs with no facilities, which have none to take one from. */
+  place?: string;
 }
 
 export type ZipIndex = Record<string, ZipEntry>;

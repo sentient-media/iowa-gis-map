@@ -1,16 +1,18 @@
 /**
  * Build-time data pipeline for the Iowa CAFO map viewer.
  *
- * Reads the raw ArcGIS export (iowa_cafo_export.csv, 44 columns)
+ * Reads the raw ArcGIS export (iowa_cafo_export.csv, 44 cols / ~14.3k rows)
  * and emits two slimmed static assets consumed by the app:
  *   - static/data/cafos.geojson  — one Point feature per facility, ~30 props.
  *   - static/data/zip-index.json — per-5-digit-zip aggregates + bounds, so the
- *     zip lookup needs no runtime geocoder.
+ *     zip lookup needs no runtime geocoder. Iowa ZIPs with no facilities get
+ *     an empty entry whose bounds come from data/iowa-zip-bounds.json, so the
+ *     map can frame them too.
  *
  * Run with:  npm run data
  */
 import { createReadStream } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'csv-parse';
@@ -18,6 +20,8 @@ import { parse } from 'csv-parse';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const SRC = resolve(ROOT, 'iowa_cafo_export.csv');
+// Extent + place name of every Iowa ZIP (see scripts/zip-bounds.mjs).
+const ZIP_BOUNDS = resolve(ROOT, 'data', 'iowa-zip-bounds.json');
 const OUT_DIR = resolve(ROOT, 'static', 'data');
 
 // Iowa bounding box (a little generous) — guards against out-of-state strays.
@@ -81,14 +85,6 @@ const legStr = (row) => {
   return [c ? `US-${c}` : '', h ? `House ${h}` : '', s ? `Senate ${s}` : ''].filter(Boolean).join(' · ');
 };
 
-// Editorial annotations are not distinct species. Match the UI filter keys.
-const animalType = (value) => {
-  const label = str(value).replace(/\s+ADDED$/i, '');
-  if (/^Cattle \(Beef\)$/i.test(label)) return 'Cattle (Beef)';
-  const known = ['Pig', 'Cattle (Dairy)', 'Chickens', 'Turkeys', 'Sheep/Goat'];
-  return known.includes(label) ? label : 'Other';
-};
-
 const records = [];
 const parser = createReadStream(SRC).pipe(
   parse({ columns: true, skip_empty_lines: true, relax_quotes: true, bom: true })
@@ -123,8 +119,6 @@ for await (const row of parser) {
   // popup but is not a filter: every Active 300+ AU operation makes the map.
   const opType = str(row.OperatType);
   records.push({
-    // DNR IDs can repeat for separate rows/species in the supplied export.
-    recordId: `row-${total}`,
     facName: str(row.facName),
     address: str(row.LocAddress),
     city: str(row.CityName),
@@ -133,7 +127,7 @@ for await (const row of parser) {
     // all in-region.
     zip: zip5(row.ZIP_CODE),
     county: str(row.countyName),
-    animalType: animalType(row.AnimalType),
+    animalType: str(row.AnimalType) || 'Other',
     animalCount: Math.round(num(row.AnimalCount)),
     animalUnits,
     breakdown: breakdownStr(row),
@@ -168,11 +162,23 @@ for await (const row of parser) {
 }
 
 // ----- GeoJSON FeatureCollection -----
+// A key unique to each feature. `stfacid` is the DNR's site ID, and the
+// export lists 70 of them twice — two DNR records at one site, e.g. a
+// confinement and an open feedlot, with their own animals and permits (the
+// DNR report links differ). Both are kept; but the UI keys its lists on this
+// and Svelte refuses duplicate keys, so the repeats get a suffix.
+const seen = new Map();
+for (const r of records) {
+  const base = r.stfacid || `${r.lon},${r.lat}`;
+  const n = (seen.get(base) || 0) + 1;
+  seen.set(base, n);
+  r.uid = n === 1 ? base : `${base}#${n}`;
+}
+
 const features = records.map((r) => ({
   type: 'Feature',
   geometry: { type: 'Point', coordinates: [r.lon, r.lat] },
   properties: {
-    recordId: r.recordId,
     name: r.facName,
     address: r.address,
     city: r.city,
@@ -203,7 +209,8 @@ const features = records.map((r) => ({
     dnrUrl: r.dnrUrl,
     compUrl: r.compUrl,
     stfacid: r.stfacid,
-    locid: r.locid
+    locid: r.locid,
+    uid: r.uid
   }
 }));
 const geojson = { type: 'FeatureCollection', features };
@@ -250,6 +257,27 @@ for (const [zip, z] of zipMap) {
   };
 }
 
+// A ZIP with no facilities still gets an entry — count 0, extent from the
+// Census ZCTA polygon — so searching it frames the ZIP like any other instead
+// of coming up empty. `place` labels it, since there are no facilities to
+// take a town name from.
+const zipBounds = JSON.parse(await readFile(ZIP_BOUNDS, 'utf8'));
+let emptyZips = 0;
+for (const [zip, ref] of Object.entries(zipBounds)) {
+  if (zipIndex[zip]) continue;
+  const b = ref.bounds;
+  zipIndex[zip] = {
+    count: 0,
+    totalManure: 0,
+    totalAnimals: 0,
+    species: {},
+    center: [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2],
+    bounds: b,
+    place: ref.name
+  };
+  emptyZips++;
+}
+
 await mkdir(OUT_DIR, { recursive: true });
 await writeFile(resolve(OUT_DIR, 'cafos.geojson'), JSON.stringify(geojson));
 await writeFile(resolve(OUT_DIR, 'zip-index.json'), JSON.stringify(zipIndex));
@@ -268,7 +296,10 @@ console.log(
     `${droppedAU} under ${MIN_AU} AU, ${droppedInactive} not Active.`
 );
 console.log(`Wrote ${features.length} features -> static/data/cafos.geojson`);
-console.log(`Wrote ${Object.keys(zipIndex).length} zips -> static/data/zip-index.json`);
+console.log(
+  `Wrote ${Object.keys(zipIndex).length} zips (${zipMap.size} with facilities, ` +
+    `${emptyZips} without) -> static/data/zip-index.json`
+);
 console.log(
   `Statewide: ${statewide.animals.toLocaleString()} animals, ` +
     `${(statewide.manure / 1e9).toFixed(1)}B lbs manure/yr`

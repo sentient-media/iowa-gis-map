@@ -1,8 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy, untrack } from 'svelte';
-  import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
   import type { Map as MlMap, Popup as MlPopup, Marker as MlMarker, GeoJSONSource } from 'maplibre-gl';
-  import { app, mapBus, ui, clearSearch, searchActive, detentPx, BAR_H } from '$lib/state.svelte';
+  import { app, mapBus, ui, clearSearch, searchActive, detentPx, BAR_H, TOP_RESERVED } from '$lib/state.svelte';
   import { colorExpr, radiusForMode } from '$lib/data/symbology';
   import { toExpression, passes } from '$lib/data/filters';
   import { circlePolygon, circleBounds } from '$lib/data/near';
@@ -47,15 +46,15 @@
     // usable pixels of height and send the camera somewhere absurd.
     if (vh <= 520 && vw >= 480) {
       return {
-        top: Math.min(ui.topReserved, vh - BAR_H - 92),
+        top: 92,
         bottom: BAR_H + 12,
         left: Math.round(Math.min(390, vw * 0.55)) + 20,
         right: 20
       };
     }
     return {
-      top: ui.topReserved,
-      bottom: Math.min(detentPx(ui.detent, vh) + BAR_H + 12, Math.max(BAR_H + 12, vh - ui.topReserved - 80)),
+      top: TOP_RESERVED,
+      bottom: detentPx(ui.detent, vh) + BAR_H + 12,
       left: 20,
       right: 20
     };
@@ -142,8 +141,16 @@
   // mistaken for the user clicking the ✕ (which zooms back out).
   let closingPopup = false;
 
-  // Use the source-row ID: DNR IDs can repeat, and MapLibre quantizes coordinates.
-  const facilityKey = (f: Facility) => f.recordId;
+  // Stable identity for a facility, so we can tell whether a click landed on the
+  // one we're already flown in to.
+  //
+  // It has to key off the DNR id rather than coordinates: MapLibre quantises
+  // geometry when it tiles a GeoJSON source, so the lon/lat that comes back
+  // from queryRenderedFeatures is close to, but not equal to, the value in the
+  // source data. Comparing coordinates therefore worked only when both sides
+  // came from the map, and silently failed for a facility opened from the
+  // results list. `uid` is that id, made unique where the export repeats one.
+  const facilityKey = (f: Facility) => f.uid;
 
   // Desktop-only hover preview: a small chip that follows the cursor and shows
   // just the facility name. Identification-at-a-glance without the full popup.
@@ -204,9 +211,6 @@
 
   onMount(async () => {
     MaplibreGl = await import('maplibre-gl');
-    // MapLibre 6 ships a separate worker. Have Vite bundle it and its imports
-    // rather than letting MapLibre look beside the hashed application chunk.
-    MaplibreGl.setWorkerUrl(mapWorkerUrl);
     await import('maplibre-gl/dist/maplibre-gl.css');
 
     const m = new MaplibreGl.Map({
@@ -546,7 +550,7 @@
     const phone = el.clientWidth <= 720 || el.clientHeight <= 520;
     const sideDocked = el.clientHeight <= 520 && el.clientWidth >= 480;
     const offset: [number, number] = !phone
-      ? [0, Math.round(el.clientHeight * 0.2)]
+      ? [0, 0]
       : sideDocked
         ? [Math.round(el.clientWidth * 0.2), 0]
         : [0, -Math.round(el.clientHeight * 0.22)];

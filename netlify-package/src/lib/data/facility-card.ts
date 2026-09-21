@@ -8,7 +8,7 @@
  * permit marks) stay inline.
  */
 import { speciesLabel, speciesColor } from './species';
-import { commas, compact } from './format';
+import { compact, statNum } from './format';
 import type { FacilityProps } from './types';
 
 const esc = (s: unknown) =>
@@ -18,27 +18,23 @@ const esc = (s: unknown) =>
   );
 
 /** Color-coded summary of a facility's enforcement record. */
-export function complianceSummary(p: FacilityProps, expanded = false): {
+export function complianceSummary(p: FacilityProps): {
   tone: 'clean' | 'issues' | 'unknown';
   text: string;
 } {
   const enf = [
-    { n: p.novs, one: expanded ? 'Notice of Violation' : 'NOV', many: expanded ? 'Notices of Violation' : 'NOVs' },
-    { n: p.lncs, one: expanded ? 'Letter of Noncompliance' : 'LNC', many: expanded ? 'Letters of Noncompliance' : 'LNCs' },
-    { n: p.orders, one: expanded ? 'Administrative Order' : 'order', many: expanded ? 'Administrative Orders' : 'orders' },
-    { n: p.spills, one: expanded ? 'Manure spill' : 'spill', many: expanded ? 'Manure spills' : 'spills' }
+    { n: p.novs, one: 'notice of violation', many: 'notices of violation' },
+    { n: p.lncs, one: 'letter of noncompliance', many: 'letters of noncompliance' },
+    { n: p.orders, one: 'administrative order', many: 'administrative orders' },
+    { n: p.spills, one: 'manure spill', many: 'manure spills' }
   ];
   const known = enf.filter((e) => e.n != null);
   if (known.length === 0) return { tone: 'unknown', text: 'Enforcement record unavailable' };
   const issues = known.filter((e) => (e.n ?? 0) > 0);
-  if (issues.length === 0) {
-    return known.length === enf.length
-      ? { tone: 'clean', text: 'No violations on record' }
-      : { tone: 'unknown', text: 'No violations in available records; some history unavailable' };
-  }
+  if (issues.length === 0) return { tone: 'clean', text: 'No violations on record' };
   return {
     tone: 'issues',
-    text: issues.map((e) => `${e.n} ${e.n === 1 ? e.one : e.many}`).join(expanded ? '\n' : ' · ')
+    text: issues.map((e) => `${e.n} ${e.n === 1 ? e.one : e.many}`).join(' · ')
   };
 }
 
@@ -84,15 +80,15 @@ export function facilityCardHTML(p: FacilityProps, variant: 'popup' | 'sheet' = 
   const production = `
     <div class="fp-prod">
       <div class="fp-stats">
-        ${stat(commas(p.animals), 'Est. head')}
-        ${stat(commas(p.units), 'Animal units')}
+        ${stat(statNum(p.animals), 'Est. head')}
+        ${stat(statNum(p.units), 'Animal units')}
         ${stat(compact(p.manure), 'lbs manure/yr')}
       </div>
       ${multiSpecies ? `<div class="fp-breakdown">${esc(p.breakdown)} <span class="fp-au">AU</span></div>` : ''}
     </div>`;
 
   // --- 3. Compliance (the hook) ---
-  const c = complianceSummary(p, !sheet);
+  const c = complianceSummary(p);
   const tone = TONES[c.tone];
   const permit = (label: string, v: string) => {
     const mark = v === 'Y' ? '✓' : v === 'N' ? '✗' : '—';
@@ -112,22 +108,15 @@ export function facilityCardHTML(p: FacilityProps, variant: 'popup' | 'sheet' = 
     <div class="fp-comp">
       <div class="fp-banner" style="background:${tone.bg};color:${tone.fg}">
         <span class="fp-banner-icon">${tone.icon}</span>
-        <span class="fp-enforcement">${esc(c.text)}</span>
+        <span>${esc(c.text)}</span>
       </div>
       ${c.tone === 'issues' && p.lastNov ? `<div class="fp-lastnov">Last violation: ${esc(p.lastNov)}</div>` : ''}
       ${sheet ? '' : permits}
     </div>`;
 
   // --- 4. Footer (resources) ---
-  const link = (href: string, label: string) => {
-    try {
-      const url = new URL(href);
-      if (!['https:', 'http:'].includes(url.protocol)) return '';
-      return `<a href="${esc(url.href)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a>`;
-    } catch {
-      return '';
-    }
-  };
+  const link = (href: string, label: string) =>
+    `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a>`;
   const links = [
     p.dnrUrl ? link(p.dnrUrl, 'Full DNR report') : '',
     p.compUrl ? link(p.compUrl, 'Compliance') : ''

@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { ui, TOP_RESERVED } from '$lib/state.svelte';
   import ZipSelect from '../ZipSelect.svelte';
   import type { LoadedData } from '$lib/data/load';
 
@@ -9,29 +7,15 @@
   // without trading away the map, and so the suggestion list drops over the
   // map instead of pushing the results out of view.
   let { data }: { data: LoadedData } = $props();
-  let top: HTMLDivElement;
-  onMount(() => {
-    const measure = () => { ui.topReserved = Math.ceil(top.getBoundingClientRect().bottom) + 12; };
-    const observer = new ResizeObserver(measure);
-    observer.observe(top);
-    window.addEventListener('resize', measure);
-    measure();
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', measure);
-      ui.topReserved = TOP_RESERVED;
-    };
-  });
 </script>
 
-<div class="top" bind:this={top}>
+<div class="top">
   <div class="card rounded-md border border-rule shadow-sm">
     <div class="brand">
       <span class="wordmark-brand">Sentient Media</span>
-      <span class="wordmark-sub">Iowa Map Viewer</span>
+      <span class="wordmark-sub">Iowa<span class="dot">·</span>Map viewer</span>
     </div>
-    <ZipSelect zipIndex={data.zipIndex} byZip={data.byZip} byCounty={data.byCounty} all={data.all} />
-    <p class="hint">Enter your address to see every operation within a few miles — or search a ZIP code, city, or county.</p>
+    <ZipSelect zipIndex={data.zipIndex} byZip={data.byZip} byCounty={data.byCounty} all={data.all} compact />
   </div>
 </div>
 
@@ -46,12 +30,6 @@
   .card {
     padding: 8px 10px 10px;
     background: theme('colors.paper-2');
-  }
-  .hint {
-    margin: 8px 0 0;
-    font-size: 12px;
-    line-height: 1.45;
-    color: theme('colors.ink-2');
   }
   .brand {
     display: flex;

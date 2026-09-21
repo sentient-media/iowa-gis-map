@@ -14,7 +14,7 @@
   let lastKey = '';
   $effect(() => {
     const sel = app.selected;
-    const key = sel ? `${sel.lon},${sel.lat},${sel.stfacid ?? ''}` : '';
+    const key = sel ? sel.uid : '';
     if (key === lastKey) return;
     lastKey = key;
     if (key) ui.cardDetent = 'half';
