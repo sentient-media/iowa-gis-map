@@ -173,6 +173,8 @@
   // keystroke has already superseded.
   $effect(() => {
     const raw = query.trim();
+    const mine = ++token;
+    addrHits = [];
     if (!geocodable(raw)) {
       addrHits = [];
       geoError = '';
@@ -181,7 +183,6 @@
     }
     geocoding = true;
     geoError = '';
-    const mine = ++token;
     const timer = setTimeout(async () => {
       try {
         const hits = await suggestAddresses(raw);
@@ -196,7 +197,10 @@
         if (mine === token) geocoding = false;
       }
     }, DEBOUNCE_MS);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      token++;
+    };
   });
 
   // With a query: ZIP/city/county matches first, then facility-name matches.

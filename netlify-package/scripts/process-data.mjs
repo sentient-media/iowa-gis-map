@@ -1,7 +1,7 @@
 /**
  * Build-time data pipeline for the Iowa CAFO map viewer.
  *
- * Reads the raw ArcGIS export (iowa_cafo_export.csv, 44 cols / ~14.3k rows)
+ * Reads the raw ArcGIS export (iowa_cafo_export.csv, 44 columns)
  * and emits two slimmed static assets consumed by the app:
  *   - static/data/cafos.geojson  — one Point feature per facility, ~30 props.
  *   - static/data/zip-index.json — per-5-digit-zip aggregates + bounds, so the
@@ -20,7 +20,7 @@ import { parse } from 'csv-parse';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const SRC = resolve(ROOT, 'iowa_cafo_export.csv');
-// Extent + place name of every Iowa ZIP (see scripts/zip-bounds.mjs).
+// Extent + place name of every Iowa ZIP from the supplied reference.
 const ZIP_BOUNDS = resolve(ROOT, 'data', 'iowa-zip-bounds.json');
 const OUT_DIR = resolve(ROOT, 'static', 'data');
 
@@ -85,6 +85,14 @@ const legStr = (row) => {
   return [c ? `US-${c}` : '', h ? `House ${h}` : '', s ? `Senate ${s}` : ''].filter(Boolean).join(' · ');
 };
 
+// Editorial annotations are not distinct species. Match the UI filter keys.
+const animalType = (value) => {
+  const label = str(value).replace(/\s+ADDED$/i, '');
+  if (/^Cattle \(Beef\)$/i.test(label)) return 'Cattle (Beef)';
+  const known = ['Pig', 'Cattle (Dairy)', 'Chickens', 'Turkeys', 'Sheep/Goat'];
+  return known.includes(label) ? label : 'Other';
+};
+
 const records = [];
 const parser = createReadStream(SRC).pipe(
   parse({ columns: true, skip_empty_lines: true, relax_quotes: true, bom: true })
@@ -127,7 +135,7 @@ for await (const row of parser) {
     // all in-region.
     zip: zip5(row.ZIP_CODE),
     county: str(row.countyName),
-    animalType: str(row.AnimalType) || 'Other',
+    animalType: animalType(row.AnimalType),
     animalCount: Math.round(num(row.AnimalCount)),
     animalUnits,
     breakdown: breakdownStr(row),

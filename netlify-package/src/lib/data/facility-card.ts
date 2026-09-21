@@ -31,7 +31,11 @@ export function complianceSummary(p: FacilityProps, expanded = false): {
   const known = enf.filter((e) => e.n != null);
   if (known.length === 0) return { tone: 'unknown', text: 'Enforcement record unavailable' };
   const issues = known.filter((e) => (e.n ?? 0) > 0);
-  if (issues.length === 0) return { tone: 'clean', text: 'No violations on record' };
+  if (issues.length === 0) {
+    return known.length === enf.length
+      ? { tone: 'clean', text: 'No violations on record' }
+      : { tone: 'unknown', text: 'No violations in available records; some history unavailable' };
+  }
   return {
     tone: 'issues',
     text: issues.map((e) => `${e.n} ${e.n === 1 ? e.one : e.many}`).join(expanded ? '\n' : ' · ')
@@ -115,8 +119,15 @@ export function facilityCardHTML(p: FacilityProps, variant: 'popup' | 'sheet' = 
     </div>`;
 
   // --- 4. Footer (resources) ---
-  const link = (href: string, label: string) =>
-    `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a>`;
+  const link = (href: string, label: string) => {
+    try {
+      const url = new URL(href);
+      if (!['https:', 'http:'].includes(url.protocol)) return '';
+      return `<a href="${esc(url.href)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a>`;
+    } catch {
+      return '';
+    }
+  };
   const links = [
     p.dnrUrl ? link(p.dnrUrl, 'Full DNR report') : '',
     p.compUrl ? link(p.compUrl, 'Compliance') : ''

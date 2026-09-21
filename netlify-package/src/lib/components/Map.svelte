@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy, untrack } from 'svelte';
+  import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
   import type { Map as MlMap, Popup as MlPopup, Marker as MlMarker, GeoJSONSource } from 'maplibre-gl';
   import { app, mapBus, ui, clearSearch, searchActive, detentPx, BAR_H } from '$lib/state.svelte';
   import { colorExpr, radiusForMode } from '$lib/data/symbology';
@@ -211,6 +212,8 @@
 
   onMount(async () => {
     MaplibreGl = await import('maplibre-gl');
+    // Bundle MapLibre 6's separate worker into the static build.
+    MaplibreGl.setWorkerUrl(mapWorkerUrl);
     await import('maplibre-gl/dist/maplibre-gl.css');
 
     const m = new MaplibreGl.Map({
