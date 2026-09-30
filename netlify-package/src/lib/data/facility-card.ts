@@ -26,7 +26,7 @@ export function complianceSummary(p: FacilityProps, expanded = false): {
     { n: p.novs, one: expanded ? 'Notice of Violation' : 'notice of violation', many: expanded ? 'Notices of Violation' : 'notices of violation' },
     { n: p.lncs, one: expanded ? 'Letter of Noncompliance' : 'letter of noncompliance', many: expanded ? 'Letters of Noncompliance' : 'letters of noncompliance' },
     { n: p.orders, one: expanded ? 'Administrative Order' : 'administrative order', many: expanded ? 'Administrative Orders' : 'administrative orders' },
-    { n: p.spills, one: expanded ? 'Manure spill' : 'manure spill', many: expanded ? 'Manure spills' : 'manure spills' }
+    { n: p.spills, one: expanded ? 'Spill' : 'spill', many: expanded ? 'Spills' : 'spills' }
   ];
   const known = enf.filter((e) => e.n != null);
   if (known.length === 0) return { tone: 'unknown', text: 'Enforcement record unavailable' };

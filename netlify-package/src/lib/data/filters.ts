@@ -34,7 +34,7 @@ export const VIOLATION_TYPES: {
   { key: 'novs', label: 'Notices of violation' },
   { key: 'lncs', label: 'Letters of noncompliance' },
   { key: 'orders', label: 'Administrative orders' },
-  { key: 'spills', label: 'Manure spills' }
+  { key: 'spills', label: 'Spills' }
 ];
 
 export const defaultFilter = (): FilterState => ({

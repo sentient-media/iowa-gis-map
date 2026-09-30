@@ -65,7 +65,7 @@ test('ZIPs without facilities retain valid map extents and zero totals', () => {
 const daybreak = data.features.find((f) => f.properties.name === 'Daybreak Foods Vincent Complex').properties;
 test('Daybreak desktop copy is expanded on separate lines and mobile labels stay expanded', () => {
   assert.equal(complianceSummary(daybreak, true).text,
-    '34 Notices of Violation\n4 Letters of Noncompliance\n2 Administrative Orders\n2 Manure spills');
+    '34 Notices of Violation\n4 Letters of Noncompliance\n2 Administrative Orders\n2 Spills');
   const popup = facilityCardHTML(daybreak);
   assert.ok(popup.includes('class="fp-enforcement"'));
   assert.ok(popup.includes('6.04M'));
